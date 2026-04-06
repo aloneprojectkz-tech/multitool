@@ -47,6 +47,19 @@ class TranslatorSettings(Base):
     owner_lang: Mapped[str] = mapped_column(String(10), default="ru")
 
 
+class AISettings(Base):
+    __tablename__ = "ai_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    # Кастомный системный промпт
+    system_prompt: Mapped[str] = mapped_column(
+        Text,
+        default="Ты полезный ассистент. Отвечай чётко и по делу."
+    )
+    # Автоответ для всех чатов
+    auto_reply_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
 class KnownChat(Base):
     __tablename__ = "known_chats"
 
