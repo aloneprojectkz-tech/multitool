@@ -7,7 +7,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.types import BusinessConnection
 from config import BOT_TOKEN
 from database import init_db
-from handlers import menu, deleted_messages, ai_assistant, translator
+from handlers import menu, deleted_messages, ai_assistant, translator, ai_settings
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,6 +30,7 @@ async def main():
     dp.include_router(menu.router)
     dp.include_router(deleted_messages.router)
     dp.include_router(ai_assistant.router)
+    dp.include_router(ai_settings.router)
     dp.include_router(translator.router)
 
     await dp.start_polling(bot)
