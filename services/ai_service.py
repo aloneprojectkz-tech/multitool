@@ -36,7 +36,7 @@ async def _find_working_provider():
     return None
 
 
-async def ask_ai(prompt: str, history: list[dict] | None = None) -> str:
+async def ask_ai(prompt: str, history: list[dict] | None = None, system_prompt: str | None = None) -> str:
     global _working_provider
 
     if _working_provider is None:
@@ -45,7 +45,8 @@ async def ask_ai(prompt: str, history: list[dict] | None = None) -> str:
     if _working_provider is None:
         return "❌ Ни один провайдер не ответил. Попробуй позже."
 
-    messages = [{"role": "system", "content": "Ты полезный ассистент. Отвечай чётко и по делу."}]
+    sys = system_prompt or "Ты полезный ассистент. Отвечай чётко и по делу."
+    messages = [{"role": "system", "content": sys}]
     if history:
         messages.extend(history)
     messages.append({"role": "user", "content": prompt})
