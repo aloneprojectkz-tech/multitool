@@ -1,7 +1,7 @@
 from aiogram import Router, Bot
 from aiogram.types import BusinessMessagesDeleted, Message
 from sqlalchemy import select
-from database import async_session, MessageCache, DeletedMessage
+from database import async_session, MessageCache, DeletedMessage, KnownChat
 from config import OWNER_ID
 from datetime import datetime
 
@@ -12,7 +12,23 @@ router = Router()
 @router.business_message()
 async def cache_message(message: Message):
     async with async_session() as session:
-        # Удаляем старый кэш если есть
+        # Сохраняем/обновляем известный чат
+        result = await session.execute(
+            select(KnownChat).where(KnownChat.chat_id == message.chat.id)
+        )
+        known = result.scalar_one_or_none()
+        if known:
+            known.chat_name = message.chat.full_name or message.chat.username
+            known.business_connection_id = message.business_connection_id
+            known.last_seen = datetime.utcnow()
+        else:
+            session.add(KnownChat(
+                chat_id=message.chat.id,
+                chat_name=message.chat.full_name or message.chat.username,
+                business_connection_id=message.business_connection_id,
+            ))
+
+        # Кэшируем само сообщение
         existing = await session.execute(
             select(MessageCache).where(
                 MessageCache.business_connection_id == message.business_connection_id,
@@ -20,21 +36,18 @@ async def cache_message(message: Message):
                 MessageCache.message_id == message.message_id,
             )
         )
-        existing = existing.scalar_one_or_none()
-        if not existing:
-            cached = MessageCache(
+        if not existing.scalar_one_or_none():
+            session.add(MessageCache(
                 business_connection_id=message.business_connection_id,
                 chat_id=message.chat.id,
                 message_id=message.message_id,
                 text=message.text,
                 caption=message.caption,
                 from_user_id=message.from_user.id if message.from_user else None,
-                from_user_name=(
-                    message.from_user.full_name if message.from_user else None
-                ),
-            )
-            session.add(cached)
-            await session.commit()
+                from_user_name=message.from_user.full_name if message.from_user else None,
+            ))
+
+        await session.commit()
 
 
 @router.deleted_business_messages()
