@@ -1,7 +1,7 @@
 from aiogram import Router, Bot, F
 from aiogram.types import BusinessMessagesDeleted, Message
 from sqlalchemy import select
-from database import async_session, MessageCache, DeletedMessage, KnownChat, AISettings
+from database import async_session, MessageCache, DeletedMessage, KnownChat, AISettings, AIHistory
 from config import OWNER_ID
 from datetime import datetime
 
@@ -58,7 +58,29 @@ async def cache_message(message: Message, bot: Bot):
         text = message.text or message.caption
         if text:
             from services.ai_service import ask_ai
-            answer = await ask_ai(text, system_prompt=ai_settings.system_prompt)
+            from sqlalchemy import select as sa_select
+
+            # Загружаем историю этого чата (последние 20 сообщений)
+            async with async_session() as session:
+                hist_result = await session.execute(
+                    sa_select(AIHistory)
+                    .where(AIHistory.chat_id == message.chat.id)
+                    .order_by(AIHistory.created_at.asc())
+                    .limit(20)
+                )
+                history = [
+                    {"role": h.role, "content": h.content}
+                    for h in hist_result.scalars().all()
+                ]
+
+            answer = await ask_ai(text, history=history, system_prompt=ai_settings.system_prompt)
+
+            # Сохраняем в историю
+            async with async_session() as session:
+                session.add(AIHistory(chat_id=message.chat.id, role="user", content=text))
+                session.add(AIHistory(chat_id=message.chat.id, role="assistant", content=answer))
+                await session.commit()
+
             try:
                 await bot.send_message(
                     chat_id=message.chat.id,
