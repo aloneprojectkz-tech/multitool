@@ -47,6 +47,16 @@ class TranslatorSettings(Base):
     owner_lang: Mapped[str] = mapped_column(String(10), default="ru")
 
 
+class AIHistory(Base):
+    __tablename__ = "ai_history"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    chat_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    role: Mapped[str] = mapped_column(String(20))  # user / assistant
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class AISettings(Base):
     __tablename__ = "ai_settings"
 
