@@ -9,7 +9,7 @@ router = Router()
 def get_main_kb() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🤖 ИИ Ассистент")],
+            [KeyboardButton(text="🤖 ИИ Ассистент"), KeyboardButton(text="⚙️ Настройки ИИ")],
             [KeyboardButton(text="🌐 Переводчик")],
             [KeyboardButton(text="🗑 Удалённые сообщения")],
         ],
