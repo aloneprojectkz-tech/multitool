@@ -47,6 +47,16 @@ class TranslatorSettings(Base):
     owner_lang: Mapped[str] = mapped_column(String(10), default="ru")
 
 
+class KnownChat(Base):
+    __tablename__ = "known_chats"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    chat_id: Mapped[int] = mapped_column(BigInteger, unique=True)
+    chat_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    business_connection_id: Mapped[str] = mapped_column(String(100))
+    last_seen: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class MessageCache(Base):
     __tablename__ = "message_cache"
 
